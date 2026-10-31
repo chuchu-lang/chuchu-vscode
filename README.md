@@ -1,3 +1,5 @@
+<img src="logo.jpg" alt="Chuchu logo" width="128" height="128">
+
 # Chuchu Language for VS Code
 
 Language support for [Chuchu](https://github.com/chuchu-lang/chuchu-core), built against its current `assign … as` and `function … be` syntax. Requires VS Code 1.96 or newer.
@@ -27,15 +29,19 @@ Open any `.chuchu` file. See [examples/features.chuchu](examples/features.chuchu
 
 ## Build a program
 
-Install [Cheeku and its host toolchain](https://github.com/chuchu-lang/chuchu-core#native-build-and-platform-status). Put `cheeku` on your PATH or set the executable path in VS Code settings:
+Build [Cheeku from source with its host toolchain](https://github.com/chuchu-lang/chuchu-core#native-build-and-platform-status). The compiler does not need a published release; point the extension at the executable produced by your local build.
+
+For sibling checkouts of `chuchu-core` and `chuchu-vscode`, opening `chuchu-vscode` in VS Code uses the checked-in `.vscode/settings.json`:
 
 ```json
 {
-  "chuchu.compilerPath": "/absolute/path/to/cheeku"
+  "chuchu.compilerPath": "../chuchu-core/target/release/cheeku"
 }
 ```
 
-On Windows, use an escaped path such as `"C:\\tools\\cheeku.exe"`. Supply only the executable path, without surrounding shell quotes or extra arguments. Paths containing directories are resolved relative to the file's workspace folder, or its source directory when no workspace folder is open. A bare name is resolved through PATH.
+When opening the parent `chuchu-org` folder instead, set `chuchu.compilerPath` to `./chuchu-core/target/release/cheeku` in that folder's `.vscode/settings.json`. For a different workspace or a standalone file, use the absolute path to your local compiler. To use a debug compiler build, replace `target/release` with `target/debug`. A release compiler can produce both normal and debug programs.
+
+On Windows, append `.exe` to the compiler filename, or use an escaped path such as `"C:\\tools\\cheeku.exe"`. Supply only the executable path, without surrounding shell quotes or extra arguments. Paths containing directories are resolved relative to the file's workspace folder, or its source directory when no workspace folder is open. A bare name is resolved through PATH.
 
 Open a saved `.chuchu` file and use the editor's build button or the Command Palette:
 

@@ -1,4 +1,18 @@
 {
   "version": "0.2.0",
-  "configurations": [{ "name": "Run Chuchu Extension", "type": "extensionHost", "request": "launch", "args": ["--extensionDevelopmentPath=${workspaceFolder}"], "outFiles": ["${workspaceFolder}/dist/**/*.js"], "preLaunchTask": "npm: compile" }]
+  "configurations": [
+    {
+      "name": "Run Chuchu Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    }
+  ]
 }
