@@ -1,0 +1,88 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Chuchu",
+  "scopeName": "source.chuchu",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "name": "keyword.control.chuchu",
+      "match": "\\b(?:assign|as|show|reassign|if|else|while|function|be|return|err)\\b"
+    },
+    {
+      "name": "constant.language.boolean.chuchu",
+      "match": "\\b(?:true|false)\\b"
+    },
+    {
+      "name": "storage.type.chuchu",
+      "match": "\\b(?:int|float|bool|string|result)\\b"
+    },
+    {
+      "name": "support.function.builtin.chuchu",
+      "match": "\\b(?:abs|sqrt|min|max|sum|len|input|try_input|parse_int|parse_float|to_string|ok|is_ok|is_eof|error_code|error_message|unwrap)(?=\\s*\\()"
+    },
+    {
+      "name": "entity.name.function.chuchu",
+      "match": "\\b[a-zA-Z_]\\w*(?=\\s*\\()"
+    },
+    {
+      "name": "constant.numeric.chuchu",
+      "match": "\\b\\d+(?:\\.\\d*)?(?:[eE][+-]?\\d+)?"
+    },
+    {
+      "name": "keyword.operator.chuchu",
+      "match": "==|!=|<=|>=|[+*/=<>-]"
+    },
+    {
+      "name": "punctuation.chuchu",
+      "match": "[{}\\[\\](),:]"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.chuchu",
+          "begin": "//",
+          "end": "$",
+          "patterns": [
+            {
+              "name": "storage.type.annotation.chuchu",
+              "match": "\\b(?:TODO|NOTE|CRITICAL|FIXME|WARNING|HACK|DONE):"
+            }
+          ]
+        },
+        {
+          "name": "comment.block.chuchu",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "patterns": [
+            {
+              "name": "storage.type.annotation.chuchu",
+              "match": "\\b(?:TODO|NOTE|CRITICAL|FIXME|WARNING|HACK|DONE):"
+            }
+          ]
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.chuchu",
+      "begin": "\"",
+      "end": "\"|(?=$)",
+      "patterns": [
+        {
+          "name": "constant.character.escape.chuchu",
+          "match": "\\\\[nrt\"\\\\]"
+        },
+        {
+          "name": "invalid.illegal.escape.chuchu",
+          "match": "\\\\."
+        }
+      ]
+    }
+  }
+}

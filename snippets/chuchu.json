@@ -1,0 +1,68 @@
+{
+  "Declare variable": {
+    "prefix": "assign",
+    "body": "assign ${1:name} as ${2:value}",
+    "description": "Declare a variable with an inferred type"
+  },
+  "Reassign variable": {
+    "prefix": "reassign",
+    "body": "reassign ${1:name} as ${2:value}"
+  },
+  "Print value": {
+    "prefix": "show",
+    "body": "show ${1:expression}"
+  },
+  "Function": {
+    "prefix": "function",
+    "body": [
+      "function ${1:name}(${2:x}: ${3|int,float,bool,string,result<int>,result<float>,result<bool>,result<string>|}) be ${4|int,float,bool,string,result<int>,result<float>,result<bool>,result<string>|} {",
+      "    return ${0:x}",
+      "}"
+    ]
+  },
+  "If": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition} {",
+      "    $0",
+      "}"
+    ]
+  },
+  "If else": {
+    "prefix": "ifelse",
+    "body": [
+      "if ${1:condition} {",
+      "    ${2:show true}",
+      "} else {",
+      "    $0",
+      "}"
+    ]
+  },
+  "While": {
+    "prefix": "while",
+    "body": [
+      "while ${1:condition} {",
+      "    $0",
+      "}"
+    ]
+  },
+  "Read input": {
+    "prefix": "input",
+    "body": "assign ${1:name} as input(\"${2:Your name: }\")"
+  },
+  "Handle result": {
+    "prefix": "result",
+    "body": [
+      "assign ${1:value} as try_input(\"${2:Input: }\")",
+      "if is_ok(${1:value}) {",
+      "    show unwrap(${1:value})",
+      "} else {",
+      "    show error_message(${1:value})",
+      "}"
+    ]
+  },
+  "Typed error": {
+    "prefix": "err",
+    "body": "err<${1|int,float,bool,string|}>(${2:8})"
+  }
+}

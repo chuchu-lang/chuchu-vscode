@@ -1,0 +1,47 @@
+{
+  "name": "chuchu-vscode",
+  "displayName": "Chuchu Language",
+  "description": "Language support for Chuchu: highlighting, IntelliSense, navigation, and Cheeku build tasks.",
+  "version": "0.1.0",
+  "publisher": "chuchu-lang",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/chuchu-lang/chuchu-vscode.git" },
+  "engines": { "vscode": "^1.96.0" },
+  "categories": ["Programming Languages", "Snippets"],
+  "keywords": ["chuchu", "cheeku", "language"],
+  "main": "./dist/extension.js",
+  "activationEvents": ["onLanguage:chuchu"],
+  "capabilities": { "untrustedWorkspaces": { "supported": "limited", "description": "Editing features work in Restricted Mode; compiler tasks require a trusted workspace.", "restrictedConfigurations": ["chuchu.compilerPath"] }, "virtualWorkspaces": { "supported": "limited", "description": "Editing features work; building requires a local file system." } },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -watch -p .",
+    "vscode:prepublish": "npm run compile",
+    "test": "npm run compile && node --test test/*.test.cjs",
+    "test:integration": "npm run compile && node test/run-integration.cjs",
+    "package": "vsce package --out chuchu-vscode.vsix"
+  },
+  "contributes": {
+    "languages": [{ "id": "chuchu", "aliases": ["Chuchu", "chuchu"], "extensions": [".chuchu"], "configuration": "./language-configuration.json" }],
+    "grammars": [{ "language": "chuchu", "scopeName": "source.chuchu", "path": "./syntaxes/chuchu.tmLanguage.json" }],
+    "snippets": [{ "language": "chuchu", "path": "./snippets/chuchu.json" }],
+    "commands": [{ "command": "chuchu.build", "title": "Chuchu: Build Current File", "enablement": "isWorkspaceTrusted && resourceLangId == chuchu" }, { "command": "chuchu.buildDebug", "title": "Chuchu: Build Current File for Debugging", "enablement": "isWorkspaceTrusted && resourceLangId == chuchu" }],
+    "menus": { "editor/title": [{ "command": "chuchu.build", "when": "resourceLangId == chuchu && isWorkspaceTrusted", "group": "navigation" }] },
+    "configuration": { "title": "Chuchu", "properties": {
+      "chuchu.compilerPath": { "type": "string", "default": "cheeku", "scope": "resource", "description": "Cheeku executable name on PATH or an absolute executable path. Relative paths containing a directory are resolved from the workspace folder (or source directory)." },
+      "chuchu.diagnostics.enable": { "type": "boolean", "default": true, "scope": "resource", "description": "Report lexical errors and unmatched delimiters while editing. Build with Cheeku for full syntax and type checking." }
+    } },
+    "problemMatchers": [{ "name": "chuchu", "owner": "chuchu-compiler", "source": "cheeku", "fileLocation": "absolute", "severity": "error", "pattern": [
+      { "regexp": "^(?:cheeku: )?error: (.+)$", "message": 1 },
+      { "regexp": "^\\s*--> (.+):(\\d+):(\\d+)$", "file": 1, "line": 2, "column": 3 }
+    ] }]
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "1.96.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.6.0",
+    "typescript": "^5.9.3",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.2.0"
+  }
+}

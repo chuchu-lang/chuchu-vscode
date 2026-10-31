@@ -1,0 +1,27 @@
+//NOTE: Hover over names or use Go to Definition and Find All References.
+function square(x: int) be int {
+    return x * x
+}
+
+assign count as 3
+assign numbers as [1, 2, 3]
+show square(count)
+show sum(numbers)
+show sqrt(9.0)
+
+if count > 0 {
+    // The initializer reads the outer count; later uses read this binding.
+    assign count as count + 2
+    show count
+}
+show count
+
+assign parsed as parse_int("42")
+if is_ok(parsed) {
+    show unwrap(parsed)
+} else {
+    show error_message(parsed)
+}
+
+assign message as "Hello, 世界 🌍 // this is a string"
+show len(message)
