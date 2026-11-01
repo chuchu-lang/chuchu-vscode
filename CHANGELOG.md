@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.2
+## 0.1.3
 
 Replace the extension icon with the 256×256 PNG Chuchu mark so it renders correctly in dark themes, and update the README logo reference to match.
 

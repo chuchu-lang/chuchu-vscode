@@ -2,7 +2,7 @@
   "name": "chuchu-vscode",
   "displayName": "Chuchu Language",
   "description": "Language support for Chuchu: highlighting, IntelliSense, navigation, and Cheeku build tasks.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "chuchu-lang",
   "icon": "chuchu-logo-256x256.png",
   "license": "MIT",
