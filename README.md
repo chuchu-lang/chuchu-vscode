@@ -1,4 +1,4 @@
-<img src="logo.jpg" alt="Chuchu logo" width="128" height="128">
+<img src="chuchu-logo-256x256.png" alt="Chuchu logo" width="128" height="128">
 
 # Chuchu Language for VS Code
 

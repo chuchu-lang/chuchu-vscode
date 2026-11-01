@@ -4,7 +4,7 @@
   "description": "Language support for Chuchu: highlighting, IntelliSense, navigation, and Cheeku build tasks.",
   "version": "0.1.1",
   "publisher": "chuchu-lang",
-  "icon": "logo.jpg",
+  "icon": "chuchu-logo-256x256.png",
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/chuchu-lang/chuchu-vscode.git" },
   "engines": { "vscode": "^1.96.0" },
