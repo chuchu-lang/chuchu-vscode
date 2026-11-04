@@ -30,6 +30,54 @@ exports.run = async () => {
   const malformed = await vscode.workspace.openTextDocument({ language: 'chuchu', content: 'if true {\nshow "bad\\q"' });
   // Open-document events publish diagnostics synchronously.
   assert(vscode.languages.getDiagnostics(malformed.uri).some(d => d.message.includes('Unclosed')));
+  // Exercise relative imports and field providers against real files, including unsaved dependencies.
+  {
+    const fs = require('node:fs/promises');
+    const path = require('node:path');
+    const os = require('node:os');
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'chuchu modules '));
+    try {
+      const mathUri = vscode.Uri.file(path.join(directory, 'math.chuchu'));
+      const mathSource = 'module math\nexport record Point {\n x: int\n y: int\n}\nexport function add(a: int, b: int) be int { return a + b }\nfunction secret() be int { return 0 }\n';
+      const entrySource = 'use module math\nassign origin as math.Point {\n x: 0\n y: 0\n}\nshow math.add(2, 3)\nshow origin.x\nshow length("hi")\n';
+      const entryUri = vscode.Uri.file(path.join(directory, 'main.chuchu'));
+      await fs.writeFile(mathUri.fsPath, mathSource);
+      await fs.writeFile(entryUri.fsPath, entrySource);
+      const entry = await vscode.workspace.openTextDocument(entryUri);
+      await vscode.window.showTextDocument(entry);
+      assert.deepEqual(vscode.languages.getDiagnostics(entryUri), []);
+      const pos = text => entry.positionAt(entrySource.indexOf(text));
+      const members = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', entryUri, pos('add(2'));
+      assert(members.items.some(i => i.label === 'Point'));
+      assert(members.items.some(i => i.label === 'add'));
+      assert(!members.items.some(i => i.label === 'secret' || i.label === 'sqrt'));
+      const fields = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', entryUri, pos('x\nshow'));
+      assert(fields.items.some(i => i.label === 'x'));
+      assert(fields.items.some(i => i.label === 'y'));
+      const definition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', entryUri, pos('add(2'));
+      assert.equal(definition[0].uri.toString(), mathUri.toString());
+      assert.equal(definition[0].range.start.line, 5);
+      const fieldDefinition = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', entryUri, pos('x\nshow'));
+      assert.equal(fieldDefinition[0].uri.toString(), mathUri.toString());
+      assert.equal(fieldDefinition[0].range.start.line, 2);
+      const signature = await vscode.commands.executeCommand('vscode.executeSignatureHelpProvider', entryUri, pos('3)'));
+      assert.equal(signature.signatures[0].label, 'add(a: int, b: int) be int');
+      assert.equal(signature.activeParameter, 1);
+      const hover = await vscode.commands.executeCommand('vscode.executeHoverProvider', entryUri, pos('x\nshow'));
+      assert(hover.some(h => h.contents.some(c => c.value.includes('x: int'))));
+      const outline = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', mathUri);
+      assert(outline.some(s => s.name === 'Point' && s.children.some(c => c.name === 'x')));
+      const dependency = await vscode.workspace.openTextDocument(mathUri);
+      const edit = new vscode.WorkspaceEdit();
+      edit.insert(mathUri, dependency.positionAt(mathSource.length), '\nexport function twice(x: int) be int { return x * 2 }\n');
+      await vscode.workspace.applyEdit(edit);
+      const updated = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', entryUri, pos('add(2'));
+      assert(updated.items.some(i => i.label === 'twice'), 'unsaved imported declarations are visible');
+      console.log('Module integration: dot diagnostics, public completions, field navigation, imported signatures, record outline, and unsaved dependency updates passed.');
+    } finally {
+      await fs.rm(directory, { recursive: true, force: true });
+    }
+  }
   if (process.env.CHUCHU_COMPILER) {
     const fs = require('node:fs/promises');
     const path = require('node:path');
@@ -53,7 +101,8 @@ exports.run = async () => {
     };
     try {
       await settings.update('compilerPath', process.env.CHUCHU_COMPILER, vscode.ConfigurationTarget.Global);
-      await fs.writeFile(uri.fsPath, 'show 3 * 3\n');
+      await fs.writeFile(path.join(directory, 'math.chuchu'), 'module math\nexport function add(a: int, b: int) be int { return a + b }\n');
+      await fs.writeFile(uri.fsPath, 'use module math\nshow math.add(4, 5)\n');
       const saved = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(saved);
       const normal = await runBuild('chuchu.build');

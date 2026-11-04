@@ -64,5 +64,68 @@
   "Typed error": {
     "prefix": "err",
     "body": "err<${1|int,float,bool,string|}>(${2:8})"
+  },
+  "Record": {
+    "prefix": "record",
+    "body": [
+      "record ${1:Point} {",
+      "    ${2:x}: ${3:int}",
+      "    ${4:y}: ${5:int}",
+      "}"
+    ],
+    "description": "Declare a record value type"
+  },
+  "Record initializer": {
+    "prefix": "recordvalue",
+    "body": [
+      "${1:Point} {",
+      "    ${2:x}: ${3:0}",
+      "    ${4:y}: ${5:0}",
+      "}"
+    ]
+  },
+  "Module": {
+    "prefix": "module",
+    "body": "module ${1:name}"
+  },
+  "Use module": {
+    "prefix": "use",
+    "body": "use module ${1:math}",
+    "description": "Import a relative .chuchu file"
+  },
+  "Export function": {
+    "prefix": "exportfunction",
+    "body": [
+      "export function ${1:name}(${2:x}: ${3:int}) be ${4:int} {",
+      "    return ${0:x}",
+      "}"
+    ]
+  },
+  "Export record": {
+    "prefix": "exportrecord",
+    "body": [
+      "export record ${1:Point} {",
+      "    ${2:x}: ${3:int}",
+      "}"
+    ]
+  },
+  "Read file": {
+    "prefix": "readfile",
+    "body": "assign ${1:text} as read_file(\"${2:notes.txt}\")"
+  },
+  "Write file": {
+    "prefix": "writefile",
+    "body": "assign ${1:bytes} as write_file(\"${2:notes.txt}\", ${3:text})"
+  },
+  "Handle file result": {
+    "prefix": "tryreadfile",
+    "body": [
+      "assign ${1:contents} as try_read_file(\"${2:notes.txt}\")",
+      "if is_ok(${1:contents}) {",
+      "    show unwrap(${1:contents})",
+      "} else {",
+      "    show error_message(${1:contents})",
+      "}"
+    ]
   }
 }

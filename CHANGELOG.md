@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.4
+
+- Accept dot access without false unsupported-character diagnostics.
+- Highlight `record`, `module`, `use`, and `export`, record declarations, and qualified members.
+- Replace the former `len` built-in with `length`; add file I/O completion, hover, signatures, and snippets.
+- Complete and navigate record fields, nested fields, imported public functions/records, and qualified record types.
+- Follow relative module files for definitions, hover, and signatures, including unsaved imported edits.
+- Add record outlines and snippets for records, initializers, imports, exports, and file operations.
+
 ## 0.1.3
 
 Replace the extension icon with the 256×256 PNG Chuchu mark so it renders correctly in dark themes, and update the README logo reference to match.

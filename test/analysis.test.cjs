@@ -99,3 +99,102 @@ test('completion at EOF retains the scope of unfinished blocks', () => {
   const closed = 'if true { assign inside as 1 }';
   assert.equal(visibleSymbols(analyze(closed), closed.length).length, 0);
 });
+
+test('dot access accepts the compiler module example without hiding other invalid characters', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const example = path.join(__dirname, '../../chuchu-core/examples/modules/main.chuchu');
+  const source = fs.existsSync(example) ? fs.readFileSync(example, 'utf8') :
+    'use module math\nshow math.add(2, 3)\nassign origin as math.Point {\n x: 0\n y: 0\n}\nshow origin.x';
+  assert.deepEqual(analyze(source).issues, []);
+  assert(analyze(source + '\nshow @').issues.some(i => i.message.includes('Unsupported character')));
+  assert.deepEqual(analyze('show 1.25\nshow 2e-3\nshow p.x').issues, []);
+});
+test('records resolve nested fields, copies, parameters, function results and initializer labels', () => {
+  const source = `record Address { city: string }
+record Person {
+ name: string
+ address: Address
+}
+function make(p: Person) be Person { return p }
+assign city as "local"
+assign p as Person {
+ name: "Ali"
+ address: Address { city: "Lahore" }
+}
+assign copy as p
+reassign copy.address.city as "Karachi"
+show make(p).name
+show p.name
+show city`;
+  const model = analyze(source);
+  const person = model.symbols.find(s => s.name === 'Person');
+  const address = model.symbols.find(s => s.name === 'Address');
+  assert.equal(resolve(model, at(model, 'city as "Karachi"')), address.fields[0]);
+  assert.equal(resolve(model, at(model, 'city: "Lahore"')), address.fields[0]);
+  assert.equal(resolve(model, at(model, 'name\nshow')), person.fields[0]);
+  assert.equal(resolve(model, at(model, 'name', source.lastIndexOf('show p.'))), person.fields[0]);
+  assert.equal(references(model, model.symbols.find(s => s.name === 'city')).length, 2);
+  assert.deepEqual(require('../dist/analysis').memberCompletions(model, source.indexOf('name\nshow')), person.fields);
+  assert.equal(resolve(model, at(model, 'Person)', source.indexOf('function'))), person);
+});
+test('member completions use the receiver type and respect local shadowing', () => {
+  const source = `record Point { x: int }
+record Label { text: string }
+assign p as Point { x: 1 }
+if true {
+ assign p as Label { text: "hi" }
+ show p.text
+}
+show p.x`;
+  const model = analyze(source), { memberCompletions } = require('../dist/analysis');
+  assert.deepEqual(memberCompletions(model, source.indexOf('text\n}')).map(s => s.name), ['text']);
+  assert.deepEqual(memberCompletions(model, source.lastIndexOf('x')).map(s => s.name), ['x']);
+  assert.equal(memberCompletions(model, source.indexOf('record')), undefined);
+});
+test('imports expose public members, qualified types, function signatures and nested record fields', () => {
+  const { memberCompletions } = require('../dist/analysis');
+  const math = analyze(`module math
+export record Point { x: int }
+export function add(a: int, b: int) be int { return a + b }
+function secret() be int { return 0 }
+record Private { hidden: int }`);
+  const geometry = analyze(`module geometry
+use module math
+export function translate(p: math.Point, dx: int) be math.Point { return p }`);
+  geometry.dependencies.set('math', math);
+  const source = `use module geometry.math
+use module geometry
+assign origin as math.Point { x: 0 }
+assign moved as geometry.translate(origin, 3)
+show moved.x
+show math.add(2, 3)
+show math.secret()
+show math.Private { hidden: 1 }`;
+  const model = analyze(source);
+  model.dependencies.set('math', math); model.dependencies.set('geometry', geometry);
+  assert.equal(model.symbols.find(s => s.name === 'math').modulePath, 'geometry/math.chuchu');
+  assert.deepEqual(memberCompletions(model, source.indexOf('Point {')).map(s => s.name), ['Point', 'add']);
+  assert.equal(resolve(model, at(model, 'x\nshow')), math.symbols[0].fields[0]);
+  assert.equal(resolve(model, at(model, 'secret()')), undefined);
+  assert.equal(resolve(model, at(model, 'Private {')), undefined);
+  assert.equal(callAt(model, source.indexOf('3)')).callable.name, 'translate');
+  assert.equal(callAt(model, source.indexOf('3)')).argument, 1);
+  assert.equal(resolve(model, at(model, 'Point {')).owner, math);
+});
+test('qualified calls never borrow built-in or unrelated local signatures', () => {
+  const source = 'function add(x: int) be int { return x }\nshow missing.add(1\nshow missing.sqrt(9.0';
+  const model = analyze(source);
+  assert.equal(callAt(model, source.indexOf('1\n')), undefined);
+  assert.equal(callAt(model, source.length), undefined);
+  assert.equal(resolve(model, at(model, 'add(1')), undefined);
+});
+test('current built-in catalog includes length and file I/O signatures', () => {
+  const { builtins, keywords } = require('../dist/catalog');
+  assert(!builtins.some(b => b.name === 'len'));
+  for (const name of ['length', 'read_file', 'try_read_file', 'write_file', 'try_write_file']) {
+    const source = `assign value as ${name}(`;
+    assert.equal(callAt(analyze(source), source.length).callable.name, name);
+  }
+  for (const keyword of ['record', 'module', 'use', 'export']) { assert(keywords.includes(keyword)); }
+});

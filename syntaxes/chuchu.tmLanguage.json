@@ -10,8 +10,30 @@
       "include": "#strings"
     },
     {
+      "match": "\\b(record)\\s+([a-zA-Z_]\\w*)",
+      "captures": {
+        "1": {
+          "name": "keyword.control.chuchu"
+        },
+        "2": {
+          "name": "entity.name.type.chuchu"
+        }
+      }
+    },
+    {
+      "match": "(\\.)([a-zA-Z_]\\w*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.accessor.chuchu"
+        },
+        "2": {
+          "name": "variable.other.member.chuchu"
+        }
+      }
+    },
+    {
       "name": "keyword.control.chuchu",
-      "match": "\\b(?:assign|as|show|reassign|if|else|while|function|be|return|err)\\b"
+      "match": "\\b(?:assign|as|show|reassign|if|else|while|function|be|return|err|record|module|use|export)\\b"
     },
     {
       "name": "constant.language.boolean.chuchu",
@@ -23,7 +45,7 @@
     },
     {
       "name": "support.function.builtin.chuchu",
-      "match": "\\b(?:abs|sqrt|min|max|sum|len|input|try_input|parse_int|parse_float|to_string|ok|is_ok|is_eof|error_code|error_message|unwrap)(?=\\s*\\()"
+      "match": "\\b(?:abs|sqrt|min|max|sum|length|read_file|try_read_file|write_file|try_write_file|input|try_input|parse_int|parse_float|to_string|ok|is_ok|is_eof|error_code|error_message|unwrap)(?=\\s*\\()"
     },
     {
       "name": "entity.name.function.chuchu",
@@ -39,7 +61,7 @@
     },
     {
       "name": "punctuation.chuchu",
-      "match": "[{}\\[\\](),:]"
+      "match": "[{}\\[\\](),:.]"
     }
   ],
   "repository": {

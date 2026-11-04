@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { homedir } from 'node:os';
-import { analyze, Analysis, callAt, isText, references, resolve, Span, SymbolInfo, tokenAt, visibleSymbols } from './analysis';
+import { analyze, Analysis, callAt, isText, memberCompletions, references, resolve, Span, SymbolInfo, tokenAt, visibleSymbols } from './analysis';
 import { builtins, keywordHelp, keywords, signature, types } from './catalog';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -10,10 +10,37 @@ export function activate(context: vscode.ExtensionContext): void {
   const modelFor = (document: vscode.TextDocument): Analysis => {
     const key = document.uri.toString(), entry = cache.get(key);
     if (entry?.version === document.version) { return entry.model; }
-    const model = analyze(document.getText());
+    const model = analyze(document.getText(), document.uri.toString());
     cache.set(key, { version: document.version, model });
     return model;
   };
+  const linkedModelFor = async (document: vscode.TextDocument): Promise<Analysis> => {
+    const visited = new Map<string, Analysis>();
+    const load = async (uri: vscode.Uri, current?: vscode.TextDocument): Promise<Analysis> => {
+      const key = uri.toString();
+      const existing = visited.get(key);
+      if (existing) { return existing; }
+      const opened = current ?? vscode.workspace.textDocuments.find(d => d.uri.toString() === key);
+      const model = opened ? analyze(opened.getText(), key) : analyze(new TextDecoder().decode(await vscode.workspace.fs.readFile(uri)), key);
+      visited.set(key, model);
+      model.dependencies.clear();
+      if (uri.scheme === 'untitled') { return model; }
+      for (const symbol of model.symbols.filter(s => s.kind === 'module')) {
+        const slash = uri.path.lastIndexOf('/');
+        const dependency = uri.with({ path: uri.path.slice(0, slash + 1) + symbol.modulePath });
+        try { model.dependencies.set(symbol.name, await load(dependency)); }
+        catch { /* Missing files are diagnosed by Cheeku; editing remains available. */ }
+      }
+      return model;
+    };
+    return load(document.uri, document);
+  };
+  const completionKind = (symbol: SymbolInfo) => ({ function: vscode.CompletionItemKind.Function, record: vscode.CompletionItemKind.Struct,
+    module: vscode.CompletionItemKind.Module, field: vscode.CompletionItemKind.Field, variable: vscode.CompletionItemKind.Variable,
+    parameter: vscode.CompletionItemKind.Variable })[symbol.kind];
+  const symbolKind = (symbol: SymbolInfo) => ({ function: vscode.SymbolKind.Function, record: vscode.SymbolKind.Struct,
+    module: vscode.SymbolKind.Module, field: vscode.SymbolKind.Field, variable: vscode.SymbolKind.Variable,
+    parameter: vscode.SymbolKind.Variable })[symbol.kind];
   const range = (document: vscode.TextDocument, span: Span) => new vscode.Range(document.positionAt(span.start), document.positionAt(span.end));
   const detail = (symbol: SymbolInfo) => symbol.callable ? signature(symbol.callable) : `${symbol.name}: ${symbol.type === 'inferred' ? 'inferred by Cheeku' : symbol.type}`;
   const diagnostics = vscode.languages.createDiagnosticCollection('chuchu');
@@ -35,10 +62,17 @@ export function activate(context: vscode.ExtensionContext): void {
   vscode.workspace.textDocuments.forEach(update);
 
   context.subscriptions.push(vscode.languages.registerCompletionItemProvider(selector, {
-    provideCompletionItems(document, position) {
-      const model = modelFor(document), offset = document.offsetAt(position);
+    async provideCompletionItems(document, position) {
+      const model = await linkedModelFor(document), offset = document.offsetAt(position);
       if (isText(model, offset)) { return []; }
       const items: vscode.CompletionItem[] = [];
+      const memberItems = memberCompletions(model, offset);
+      if (memberItems !== undefined) {
+        return memberItems.map(symbol => {
+          const item = new vscode.CompletionItem(symbol.name, completionKind(symbol));
+          item.detail = detail(symbol); return item;
+        });
+      }
       for (const word of [...keywords, ...types]) {
         const item = new vscode.CompletionItem(word, types.includes(word) ? vscode.CompletionItemKind.TypeParameter : vscode.CompletionItemKind.Keyword);
         item.documentation = keywordHelp[word]; items.push(item);
@@ -50,28 +84,31 @@ export function activate(context: vscode.ExtensionContext): void {
         items.push(item);
       }
       for (const symbol of visibleSymbols(model, offset)) {
-        const item = new vscode.CompletionItem(symbol.name, symbol.kind === 'function' ? vscode.CompletionItemKind.Function : vscode.CompletionItemKind.Variable);
+        const item = new vscode.CompletionItem(symbol.name, completionKind(symbol));
         item.detail = detail(symbol); item.sortText = `0${symbol.name}`; items.push(item);
       }
       return items;
     }
-  }));
+  }, '.'));
   context.subscriptions.push(vscode.languages.registerHoverProvider(selector, {
-    provideHover(document, position) {
-      const model = modelFor(document), token = tokenAt(model, document.offsetAt(position));
+    async provideHover(document, position) {
+      const model = await linkedModelFor(document), token = tokenAt(model, document.offsetAt(position));
       if (!token || token.kind !== 'word') { return; }
-      const symbol = resolve(model, token), builtin = builtins.find(b => b.name === token.text);
+      const symbol = resolve(model, token);
+      const index = model.code.findIndex(t => t.start === token.start);
+      const qualified = model.code[index - 1]?.text === '.';
+      const builtin = !qualified ? builtins.find(b => b.name === token.text) : undefined;
       const markdown = new vscode.MarkdownString();
       if (symbol) { markdown.appendCodeblock(detail(symbol), 'chuchu'); }
       else if (builtin) { markdown.appendCodeblock(signature(builtin), 'chuchu'); markdown.appendMarkdown('\n\n'); markdown.appendText(builtin.description); }
-      else if (keywordHelp[token.text]) { markdown.appendText(keywordHelp[token.text]); }
+      else if (!qualified && keywordHelp[token.text]) { markdown.appendText(keywordHelp[token.text]); }
       else { return; }
       return new vscode.Hover(markdown, range(document, token));
     }
   }));
   context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(selector, {
-    provideSignatureHelp(document, position) {
-      const call = callAt(modelFor(document), document.offsetAt(position));
+    async provideSignatureHelp(document, position) {
+      const call = callAt(await linkedModelFor(document), document.offsetAt(position));
       if (!call) { return; }
       const info = new vscode.SignatureInformation(signature(call.callable), call.callable.description);
       info.parameters = call.callable.parameters.map(p => new vscode.ParameterInformation(call.callable.optional ? `[${p}]` : p));
@@ -81,8 +118,8 @@ export function activate(context: vscode.ExtensionContext): void {
       return help;
     }
   }, '(', ','));
-  const symbolAt = (document: vscode.TextDocument, position: vscode.Position) => {
-    const model = modelFor(document), offset = document.offsetAt(position);
+  const symbolAt = async (document: vscode.TextDocument, position: vscode.Position) => {
+    const model = await linkedModelFor(document), offset = document.offsetAt(position);
     let token = tokenAt(model, offset);
     if (token?.kind !== 'word') {
       const previous = tokenAt(model, offset - 1);
@@ -91,36 +128,38 @@ export function activate(context: vscode.ExtensionContext): void {
     return { model, symbol: token ? resolve(model, token) : undefined };
   };
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(selector, {
-    provideDefinition(document, position) {
-      const { symbol } = symbolAt(document, position);
-      return symbol ? new vscode.Location(document.uri, range(document, symbol.selection)) : undefined;
+    async provideDefinition(document, position) {
+      const { symbol } = await symbolAt(document, position);
+      if (!symbol) { return; }
+      const target = symbol.owner?.uri ? await vscode.workspace.openTextDocument(vscode.Uri.parse(symbol.owner.uri)) : document;
+      return new vscode.Location(target.uri, range(target, symbol.selection));
     }
   }));
   context.subscriptions.push(vscode.languages.registerReferenceProvider(selector, {
-    provideReferences(document, position, options) {
-      const { model, symbol } = symbolAt(document, position);
-      return symbol ? references(model, symbol).filter(t => options.includeDeclaration || t.start !== symbol.selection.start)
+    async provideReferences(document, position, options) {
+      const { model, symbol } = await symbolAt(document, position);
+      return symbol ? references(model, symbol).filter(t => options.includeDeclaration || symbol.owner !== model || t.start !== symbol.selection.start)
         .map(t => new vscode.Location(document.uri, range(document, t))) : [];
     }
   }));
   context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(selector, {
-    provideDocumentHighlights(document, position) {
-      const { model, symbol } = symbolAt(document, position);
+    async provideDocumentHighlights(document, position) {
+      const { model, symbol } = await symbolAt(document, position);
       return symbol ? references(model, symbol).map(t => new vscode.DocumentHighlight(range(document, t))) : [];
     }
   }));
   context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(selector, {
     provideDocumentSymbols(document) {
       const model = modelFor(document);
-      const make = (s: SymbolInfo) => new vscode.DocumentSymbol(s.name, detail(s), s.kind === 'function' ? vscode.SymbolKind.Function : vscode.SymbolKind.Variable,
+      const make = (s: SymbolInfo) => new vscode.DocumentSymbol(s.name, detail(s), symbolKind(s),
         range(document, s), range(document, s.selection));
-      const functions = model.symbols.filter(s => s.kind === 'function');
+      const functions = model.symbols.filter(s => s.kind === 'function' || s.kind === 'record');
       const result = functions.map(s => {
         const symbol = make(s);
-        symbol.children = model.symbols.filter(child => child.kind !== 'function' && child.start > s.selection.end && child.end <= s.end).map(make);
+        symbol.children = s.fields?.map(make) ?? model.symbols.filter(child => (child.kind === 'variable' || child.kind === 'parameter') && child.start > s.selection.end && child.end <= s.end).map(make);
         return symbol;
       });
-      result.push(...model.symbols.filter(s => s.kind === 'variable' && !functions.some(f => f.start < s.start && s.end <= f.end)).map(make));
+      result.push(...model.symbols.filter(s => (s.kind === 'variable' || s.kind === 'module') && !functions.some(f => f.start < s.start && s.end <= f.end)).map(make));
       return result;
     }
   }));

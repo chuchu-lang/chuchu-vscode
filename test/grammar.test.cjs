@@ -25,6 +25,17 @@ test('TextMate grammar handles multiline comments, strings, builtins, results an
   assert(tokens('show err<string>(8)').some(t => t.text === 'string' && t.scopes.includes('storage.type')));
   tokens('show "unterminated');
   assert(tokens('show 2').some(t => t.text === 'show' && t.scopes.includes('keyword.control')));
+  for (const word of ['module', 'use', 'export']) {
+    assert(tokens(word + ' math').some(t => t.text === word && t.scopes.includes('keyword.control')));
+  }
+  assert(tokens('export record Point {').some(t => t.text === 'Point' && t.scopes.includes('entity.name.type')));
+  for (const name of ['length', 'read_file', 'try_read_file', 'write_file', 'try_write_file']) {
+    assert(tokens(`show ${name}(text)`).some(t => t.text === name && t.scopes.includes('support.function.builtin')));
+  }
+  const member = tokens('show math.length(value)');
+  assert(member.some(t => t.text === '.' && t.scopes.includes('punctuation.accessor')));
+  assert(member.some(t => t.text === 'length' && t.scopes.includes('variable.other.member')));
+  assert(!tokens('show len(values)').some(t => t.scopes.includes('support.function.builtin')));
   registry.dispose();
 });
 test('manifest compiler matcher accepts actual Cheeku diagnostics and Windows drive letters', () => {

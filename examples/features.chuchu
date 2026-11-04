@@ -24,4 +24,26 @@ if is_ok(parsed) {
 }
 
 assign message as "Hello, 世界 🌍 // this is a string"
-show len(message)
+show length(message)
+
+// Records use independent copies and dot access.
+record Point {
+    x: int
+    y: int
+}
+assign origin as Point {
+    x: 0
+    y: 0
+}
+assign moved as origin
+reassign moved.x as 3
+show moved.x
+show origin.x
+
+// Whole-file UTF-8 I/O with recoverable errors.
+assign contents as try_read_file("notes.txt")
+if is_ok(contents) {
+    show unwrap(contents)
+} else {
+    show error_message(contents)
+}

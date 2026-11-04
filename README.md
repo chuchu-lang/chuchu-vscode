@@ -2,18 +2,21 @@
 
 # Chuchu Language for VS Code
 
-Language support for [Chuchu](https://github.com/chuchu-lang/chuchu-core), built against its current `assign … as` and `function … be` syntax. Requires VS Code 1.96 or newer.
+Language support for [Chuchu](https://github.com/chuchu-lang/chuchu-core), built against compiler main, including records, modules/imports, dot access, and file I/O. Requires VS Code 1.96 or newer.
 
 ## Features
 
-- `.chuchu` file recognition and TextMate syntax highlighting for keywords, numeric literals, strings, escapes, comments, types, results, built-ins, and functions.
+- `.chuchu` file recognition and TextMate syntax highlighting for keywords, numeric literals, strings, escapes, comments, types, results, records, modules, built-ins, functions, and dot access.
 - Comment toggling, bracket matching, automatic pairs, indentation, and folding.
-- Snippets for declarations, reassignment, functions, conditionals, loops, input, and result handling.
+- Snippets for declarations, reassignment, functions, conditionals, loops, input, result handling, records, imports/exports, and file I/O.
 - Completions for keywords, types, all current built-ins, and visible document symbols.
+- Completion after `.` for record fields and public imported functions/records, including nested fields and record-returning calls.
 - Hover documentation and function signature help, including nested calls and `err<T>(code)`.
 - Go to Definition, Find All References, occurrence highlighting, and document outline.
 - Live lexical diagnostics for invalid characters, escapes, strings, numeric literals, comments, and unmatched delimiters.
 - Build commands using Cheeku, with compiler errors in the Problems panel.
+
+Go to Definition follows record fields and relative module imports across files. Imported member completion, hover, and signatures use exported declarations and include unsaved edits in open dependencies. Find All References and occurrence highlighting search the current document.
 
 Navigation understands block shadowing, declaration order, parameter scope, forward function calls, and functions that cannot capture top-level variables. Language features run locally in the extension host and work without an installed compiler.
 
@@ -59,7 +62,7 @@ Build commands require a trusted workspace and a local filesystem. Editing featu
 | `chuchu.compilerPath` | `cheeku` | Compiler executable name or path |
 | `chuchu.diagnostics.enable` | `true` | Enable live lexical and delimiter diagnostics |
 
-The editor analyzer tolerates incomplete code. It does not implement Cheeku's complete parser, type checker, or runtime checks. Build for authoritative syntax and type diagnostics. Inferred variables are labeled “inferred by Cheeku”; the extension does not guess their types. Navigation is limited to the current document, matching Chuchu's current lack of modules/imports. Automatic formatting, rename, and a bundled debugger are not included.
+The editor analyzer tolerates incomplete code. It does not implement Cheeku's complete parser, type checker, or runtime checks. Build for authoritative syntax and type diagnostics. Variables remain labeled “inferred by Cheeku”. For field completion, the editor follows simple record initializers, copies, typed parameters, and function return annotations; it does not perform full type inference. Imports resolve relative to the importing file, including dotted paths such as `use module geometry.math`. Missing or invalid imports are reported by compiler builds. Automatic formatting, rename, and a bundled debugger are not included.
 
 ## Develop and verify
 
@@ -74,7 +77,7 @@ npm run package
 
 Open this repository in VS Code and press **F5** to launch an Extension Development Host. The compile task runs before launch. `npm run watch` recompiles during development.
 
-`npm test` verifies scope resolution, shadowing, UTF-16 source offsets, incomplete code, nested call arguments, actual TextMate tokenization, and compiler problem matching. `npm run test:integration` downloads VS Code 1.96.0 and exercises the registered providers in its extension host. Set `VSCODE_VERSION=stable` to check the current stable version. Linux CI runs this command under Xvfb. Set `CHUCHU_COMPILER` to an installed Cheeku executable to also test release/debug builds, dirty-file saving, paths with spaces, and compiler diagnostics end to end.
+`npm test` verifies scope resolution, shadowing, UTF-16 source offsets, incomplete code, nested call arguments, record fields, imported member visibility, current built-ins, actual TextMate tokenization, and compiler problem matching. `npm run test:integration` downloads VS Code 1.96.0 and exercises the registered providers in its extension host, including cross-file definitions, member completions, record outlines, and unsaved imported declarations. Set `VSCODE_VERSION=stable` to check the current stable version. Linux CI runs this command under Xvfb. Set `CHUCHU_COMPILER` to an installed Cheeku executable to also test release/debug builds, dirty-file saving, paths with spaces, and compiler diagnostics end to end.
 
 `npm run package` produces `chuchu-vscode.vsix`. The package has no production npm dependencies and contains the compiled extension, grammar, language configuration, snippets, documentation, and license. Packaging does not publish it to the Marketplace. Marketplace publication requires a verified `chuchu-lang` publisher account.
 

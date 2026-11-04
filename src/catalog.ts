@@ -1,4 +1,4 @@
-export const keywords = ['assign', 'as', 'reassign', 'show', 'if', 'else', 'while', 'function', 'be', 'return', 'err', 'true', 'false'];
+export const keywords = ['assign', 'as', 'reassign', 'show', 'if', 'else', 'while', 'function', 'be', 'return', 'err', 'record', 'module', 'use', 'export', 'true', 'false'];
 export const types = ['int', 'float', 'bool', 'string', 'result'];
 export interface Callable { name: string; parameters: string[]; result: string; description: string; optional?: boolean }
 const builtin = (name: string, parameters: string[], result: string, description: string, optional = false): Callable => ({ name, parameters, result, description, optional });
@@ -7,10 +7,14 @@ export const builtins: Callable[] = [
   builtin('sqrt', ['x: float'], 'float', 'Square root. Requires a float; sqrt(9.0) is valid, sqrt(9) is not.'),
   builtin('min', ['a: int | float', 'b: int | float'], 'int | float', 'Minimum. Widens to float when either argument is float.'),
   builtin('max', ['a: int | float', 'b: int | float'], 'int | float', 'Maximum. Widens to float when either argument is float.'),
-  builtin('len', ['value: numeric array | string'], 'int', 'Array element count or Unicode scalar count for a string.'),
+  builtin('length', ['value: numeric array | string'], 'int', 'Array element count or Unicode scalar count for a string.'),
   builtin('sum', ['values: numeric array'], 'int | float', 'Ordered sum; integer addition checks overflow.'),
   builtin('input', ['prompt: string'], 'string', 'Read a UTF-8 line. EOF and read failures stop the program.', true),
   builtin('try_input', ['prompt: string'], 'result<string>', 'Read a UTF-8 line with explicit EOF and error handling.', true),
+  builtin('read_file', ['path: string'], 'string', 'Read a whole UTF-8 file without NUL bytes. Failure stops the program.'),
+  builtin('try_read_file', ['path: string'], 'result<string>', 'Read a whole UTF-8 file with recoverable errors.'),
+  builtin('write_file', ['path: string', 'text: string'], 'int', 'Create or replace a text file; return UTF-8 bytes written. Failure stops the program.'),
+  builtin('try_write_file', ['path: string', 'text: string'], 'result<int>', 'Create or replace a text file with recoverable errors; return bytes written.'),
   builtin('parse_int', ['text: string'], 'result<int>', 'Strict signed decimal parsing.'),
   builtin('parse_float', ['text: string'], 'result<float>', 'Strict finite decimal parsing.'),
   builtin('to_string', ['value: int | float | bool | string'], 'string', 'Explicit scalar conversion to string.'),
@@ -24,10 +28,14 @@ export const builtins: Callable[] = [
 ];
 export const keywordHelp: Record<string, string> = {
   assign: 'Declare an inferred variable: assign name as expression. The initializer can read an outer binding before introducing the new name.',
-  reassign: 'Update an existing variable: reassign name as expression. The declared type must be preserved, with int-to-float widening allowed.',
+  reassign: 'Update a variable or record field: reassign name.field as expression. The declared type must be preserved, with int-to-float widening allowed.',
   as: 'Required separator between a variable name and its value.',
   show: 'Print a scalar or string followed by a newline: show expression.',
   function: 'Declare a top-level function: function name(x: int) be int { return x }. Functions cannot capture top-level variables.',
+  record: 'Declare a top-level value type: record Point { x: int }. Access fields with a dot; copies are independent.',
+  module: 'Declare a file module: module math. Required at the start of imported files.',
+  use: 'Import a relative file: use module geometry.math loads geometry/math.chuchu; access exports as math.name.',
+  export: 'Make a function or record public: export function add(...) be int { ... } or export record Point { ... }.',
   be: 'Required separator before a function return type.',
   return: 'Return a value from a function. Every path must return a value.',
   if: 'Conditional block: if condition { ... } else { ... }. The condition must be bool.',
