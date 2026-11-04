@@ -1,4 +1,4 @@
-<img src="chuchu-logo-256x256.png" alt="Chuchu logo" width="128" height="128">
+<img src="chuchu-extension-icon.png" alt="Chuchu logo" width="128" height="128">
 
 # Chuchu Language for VS Code
 
@@ -22,10 +22,10 @@ Navigation understands block shadowing, declaration order, parameter scope, forw
 
 ## Install
 
-Download or build `chuchu-vscode.vsix`, then select **Extensions → … → Install from VSIX…** in VS Code. Alternatively:
+Download or build `chuchu-vscode-0.1.5.vsix`, then select **Extensions → … → Install from VSIX…** in VS Code. Alternatively:
 
 ```sh
-code --install-extension chuchu-vscode.vsix
+code --install-extension chuchu-vscode-0.1.5.vsix
 ```
 
 Open any `.chuchu` file. See [examples/features.chuchu](examples/features.chuchu) for a sample.
@@ -79,6 +79,6 @@ Open this repository in VS Code and press **F5** to launch an Extension Developm
 
 `npm test` verifies scope resolution, shadowing, UTF-16 source offsets, incomplete code, nested call arguments, record fields, imported member visibility, current built-ins, actual TextMate tokenization, and compiler problem matching. `npm run test:integration` downloads VS Code 1.96.0 and exercises the registered providers in its extension host, including cross-file definitions, member completions, record outlines, and unsaved imported declarations. Set `VSCODE_VERSION=stable` to check the current stable version. Linux CI runs this command under Xvfb. Set `CHUCHU_COMPILER` to an installed Cheeku executable to also test release/debug builds, dirty-file saving, paths with spaces, and compiler diagnostics end to end.
 
-`npm run package` produces `chuchu-vscode.vsix`. The package has no production npm dependencies and contains the compiled extension, grammar, language configuration, snippets, documentation, and license. Packaging does not publish it to the Marketplace. Marketplace publication requires a verified `chuchu-lang` publisher account.
+`npm run package` produces a versioned VSIX, currently `chuchu-vscode-0.1.5.vsix`. The package has no production npm dependencies and contains the compiled extension, grammar, language configuration, snippets, documentation, and license. Packaging does not publish it to the Marketplace. Marketplace publication requires a verified `chuchu-lang` publisher account.
 
 The editor providers use the [VS Code language feature API](https://code.visualstudio.com/api/language-extensions/programmatic-language-features).

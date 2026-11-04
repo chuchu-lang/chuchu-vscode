@@ -10,3 +10,6 @@ package-lock.json
 **/*.map
 *.vsix
 .nvmrc
+
+chuchu-logo-256x256.png
+icon-prompt.txt

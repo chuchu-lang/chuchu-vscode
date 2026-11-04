@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Replace the extension icon with an original chick mark for Marketplace resubmission.
+- Name packaged VSIX files with their version automatically.
+
 ## 0.1.4
 
 - Accept dot access without false unsupported-character diagnostics.
