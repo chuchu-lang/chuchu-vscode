@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.6
 
 - Support the new `declare name` statement: syntax highlighting, keyword hover and completion, a snippet, and editor symbol tracking so later uses are not reported as undefined.
 
