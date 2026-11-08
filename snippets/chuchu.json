@@ -4,6 +4,11 @@
     "body": "assign ${1:name} as ${2:value}",
     "description": "Declare a variable with an inferred type"
   },
+  "Declare variable without a value": {
+    "prefix": "declare",
+    "body": "declare ${1:name}",
+    "description": "Declare a variable now; its first reassign decides the type"
+  },
   "Reassign variable": {
     "prefix": "reassign",
     "body": "reassign ${1:name} as ${2:value}"

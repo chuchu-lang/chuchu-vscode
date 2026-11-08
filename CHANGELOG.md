@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Support the new `declare name` statement: syntax highlighting, keyword hover and completion, a snippet, and editor symbol tracking so later uses are not reported as undefined.
+
 ## 0.1.5
 
 - Replace the extension icon with an original chick mark for Marketplace resubmission.

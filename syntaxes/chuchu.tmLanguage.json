@@ -33,7 +33,7 @@
     },
     {
       "name": "keyword.control.chuchu",
-      "match": "\\b(?:assign|as|show|reassign|if|else|while|function|be|return|err|record|module|use|export)\\b"
+      "match": "\\b(?:assign|declare|as|show|reassign|if|else|while|function|be|return|err|record|module|use|export)\\b"
     },
     {
       "name": "constant.language.boolean.chuchu",

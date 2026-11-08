@@ -1,4 +1,4 @@
-export const keywords = ['assign', 'as', 'reassign', 'show', 'if', 'else', 'while', 'function', 'be', 'return', 'err', 'record', 'module', 'use', 'export', 'true', 'false'];
+export const keywords = ['assign', 'declare', 'as', 'reassign', 'show', 'if', 'else', 'while', 'function', 'be', 'return', 'err', 'record', 'module', 'use', 'export', 'true', 'false'];
 export const types = ['int', 'float', 'bool', 'string', 'result'];
 export interface Callable { name: string; parameters: string[]; result: string; description: string; optional?: boolean }
 const builtin = (name: string, parameters: string[], result: string, description: string, optional = false): Callable => ({ name, parameters, result, description, optional });
@@ -28,6 +28,7 @@ export const builtins: Callable[] = [
 ];
 export const keywordHelp: Record<string, string> = {
   assign: 'Declare an inferred variable: assign name as expression. The initializer can read an outer binding before introducing the new name.',
+  declare: 'Declare a variable without a value: declare name. Its type is fixed by the first reassign, and it cannot be read until every path has assigned it.',
   reassign: 'Update a variable or record field: reassign name.field as expression. The declared type must be preserved, with int-to-float widening allowed.',
   as: 'Required separator between a variable name and its value.',
   show: 'Print a scalar or string followed by a newline: show expression.',

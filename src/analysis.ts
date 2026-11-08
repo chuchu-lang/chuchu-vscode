@@ -165,6 +165,16 @@ export function analyze(source: string, uri?: string): Analysis {
     model.symbols.push({ name: name.text, kind: 'variable', type: 'inferred', selection: name,
       initializer: i + 3, scope: scopeAt(model, name.start), start: code[i].start, end: visibleFrom, visibleFrom });
   }
+  for (let i = 0; i < code.length; i++) {
+    if (code[i].text !== 'declare' || code[i + 1]?.kind !== 'word') { continue; }
+    const name = code[i + 1];
+    let end = i + 2;
+    while (end < code.length && code[end].kind !== 'newline' && code[end].text !== '}') { end++; }
+    const visibleFrom = code[end]?.start ?? source.length;
+    // No initializer: the type comes from the first `reassign`, which the editor does not infer.
+    model.symbols.push({ name: name.text, kind: 'variable', type: 'inferred', selection: name,
+      scope: scopeAt(model, name.start), start: code[i].start, end: visibleFrom, visibleFrom });
+  }
   for (const symbol of model.symbols) {
     symbol.owner = model;
     for (const field of symbol.fields ?? []) { field.owner = model; }

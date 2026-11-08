@@ -47,3 +47,9 @@ if is_ok(contents) {
 } else {
     show error_message(contents)
 }
+
+// A variable declared now and given its type by the first reassign.
+declare total
+reassign total as 40
+reassign total as total + 2
+show total

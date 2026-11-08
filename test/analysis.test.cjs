@@ -196,5 +196,9 @@ test('current built-in catalog includes length and file I/O signatures', () => {
     const source = `assign value as ${name}(`;
     assert.equal(callAt(analyze(source), source.length).callable.name, name);
   }
-  for (const keyword of ['record', 'module', 'use', 'export']) { assert(keywords.includes(keyword)); }
+  for (const keyword of ['declare', 'record', 'module', 'use', 'export']) { assert(keywords.includes(keyword)); }
+});
+test('declare introduces a variable for later statements', () => {
+  const model = analyze('declare total\nreassign total as 1\nshow total');
+  assert(model.symbols.some(s => s.name === 'total' && s.kind === 'variable'));
 });

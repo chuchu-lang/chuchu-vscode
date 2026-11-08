@@ -8,7 +8,7 @@ Language support for [Chuchu](https://github.com/chuchu-lang/chuchu-core), built
 
 - `.chuchu` file recognition and TextMate syntax highlighting for keywords, numeric literals, strings, escapes, comments, types, results, records, modules, built-ins, functions, and dot access.
 - Comment toggling, bracket matching, automatic pairs, indentation, and folding.
-- Snippets for declarations, reassignment, functions, conditionals, loops, input, result handling, records, imports/exports, and file I/O.
+- Snippets for declarations, deferred declarations (`declare`), reassignment, functions, conditionals, loops, input, result handling, records, imports/exports, and file I/O.
 - Completions for keywords, types, all current built-ins, and visible document symbols.
 - Completion after `.` for record fields and public imported functions/records, including nested fields and record-returning calls.
 - Hover documentation and function signature help, including nested calls and `err<T>(code)`.
